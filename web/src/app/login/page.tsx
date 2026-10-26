@@ -1,31 +1,21 @@
 "use client";
 
+import Link from "next/link";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { ScoreDial } from "@/components/ScoreDial";
+import { AuthLayout } from "@/components/AuthLayout";
 import { BlockingOverlay } from "@/components/BlockingOverlay";
-import { IconAlert, IconCheck, IconEye, IconEyeOff, IconMinus, IconShield, Logo, Spinner } from "@/components/icons";
-import { cx } from "@/lib/format";
-import { STATUSES } from "@/lib/status";
+import { PASSWORD_RULES, PasswordField, PasswordMatch, PasswordStrength } from "@/components/PasswordFields";
+import { IconAlert, Spinner } from "@/components/icons";
 
 export default function LoginPage() {
   return (
-    <div className="grid min-h-dvh lg:grid-cols-[1fr_1.1fr]">
-      <div className="flex flex-col bg-surface px-[var(--gutter)] py-8 md:px-14">
-        <div className="flex items-center gap-2.5">
-          <Logo />
-          <span className="t-section">Shortlist</span>
-        </div>
-        <div className="my-auto w-full max-w-[380px] py-12">
-          <Suspense>
-            <AuthForm />
-          </Suspense>
-        </div>
-        <p className="text-meta text-faint">Your resume and applications are private to your account.</p>
-      </div>
-      <Showcase />
-    </div>
+    <AuthLayout>
+      <Suspense>
+        <AuthForm />
+      </Suspense>
+    </AuthLayout>
   );
 }
 
@@ -150,6 +140,17 @@ function AuthForm() {
                 value={password}
                 onChange={setPassword}
                 invalid={invalid && mode === "signin"}
+                aside={
+                  mode === "signin" && (
+                    // Carries the address over, so it is not typed twice
+                    <Link
+                      href={email ? `/forgot-password?email=${encodeURIComponent(email)}` : "/forgot-password"}
+                      className="text-meta font-semibold text-muted underline-offset-4 transition-colors hover:text-ink hover:underline"
+                    >
+                      Forgot password?
+                    </Link>
+                  )
+                }
               >
                 {mode === "signup" && <PasswordStrength password={password} flagUnmet={triedSubmit} />}
               </PasswordField>
@@ -241,216 +242,3 @@ function AuthForm() {
 
 const MIN_LOADING_MS = 600;
 const pause = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
-
-function PasswordField({
-  ref,
-  id,
-  label,
-  autoComplete,
-  minLength,
-  value,
-  onChange,
-  disabled,
-  invalid,
-  children,
-}: {
-  ref?: React.Ref<HTMLInputElement>;
-  id: string;
-  label: string;
-  autoComplete: string;
-  minLength?: number;
-  value: string;
-  onChange: (value: string) => void;
-  disabled?: boolean;
-  invalid?: boolean;
-  children?: React.ReactNode;
-}) {
-  const [visible, setVisible] = useState(false);
-  const name = label.toLowerCase();
-
-  return (
-    <div>
-      <label htmlFor={id} className="label">
-        {label}
-      </label>
-      <div className="relative">
-        <input
-          ref={ref}
-          id={id}
-          type={visible ? "text" : "password"}
-          autoComplete={autoComplete}
-          minLength={minLength}
-          required
-          disabled={disabled}
-          aria-invalid={invalid || undefined}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          aria-describedby={children ? `${id}-hint` : undefined}
-          className="field pr-11"
-        />
-        <button
-          type="button"
-          onClick={() => setVisible(!visible)}
-          aria-label={visible ? `Hide ${name}` : `Show ${name}`}
-          aria-controls={id}
-          disabled={disabled}
-          className="absolute top-1/2 right-1.5 grid size-8 -translate-y-1/2 place-items-center rounded-md text-faint transition-colors enabled:hover:text-ink"
-        >
-          {visible ? <IconEye /> : <IconEyeOff />}
-        </button>
-      </div>
-      {children && <div id={`${id}-hint`}>{children}</div>}
-    </div>
-  );
-}
-
-const PASSWORD_RULES = [
-  { label: "Use at least 8 characters", test: (p: string) => p.length >= 8 },
-  { label: "Add an uppercase letter", test: (p: string) => /\p{Lu}/u.test(p) },
-  { label: "Add a lowercase letter", test: (p: string) => /\p{Ll}/u.test(p) },
-  { label: "Add a number or symbol", test: (p: string) => /[^\p{L}\s]/u.test(p) },
-];
-
-/** The same four rules, in the two words each one is really about. */
-const SHORT_RULE: Record<string, string> = {
-  "Use at least 8 characters": "8 characters",
-  "Add an uppercase letter": "Uppercase",
-  "Add a lowercase letter": "Lowercase",
-  "Add a number or symbol": "Number or symbol",
-};
-
-/** Four checks that answer as you type, plus the bar they add up to. */
-function PasswordStrength({ password, flagUnmet }: { password: string; flagUnmet: boolean }) {
-  const met = PASSWORD_RULES.map((rule) => rule.test(password));
-  const score = met.filter(Boolean).length;
-  // Once every rule passes there is nothing left to fix, so the checks fold away
-  const done = score === PASSWORD_RULES.length;
-
-  return (
-    <>
-      <div className="reveal" data-open={!done} aria-hidden={done}>
-        <div>
-          <div className="pt-2.5">
-            <div className="flex gap-1.5" aria-hidden>
-              {PASSWORD_RULES.map((rule, i) => (
-                <span
-                  key={rule.label}
-                  className="h-1 flex-1 rounded-full transition-colors duration-200"
-                  style={{ background: i < score ? "var(--good)" : "var(--line)" }}
-                />
-              ))}
-            </div>
-            <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
-              {PASSWORD_RULES.map((rule, i) => (
-                <li
-                  key={rule.label}
-                  className={cx(
-                    "flex items-center gap-1 text-meta transition-colors duration-200",
-                    met[i] ? "text-good" : flagUnmet ? "text-bad" : "text-faint",
-                  )}
-                >
-                  {met[i] ? <IconCheck className="draw size-3.5" /> : <IconMinus className="size-3.5" />}
-                  {SHORT_RULE[rule.label] ?? rule.label}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </div>
-      <p className="sr-only" aria-live="polite">
-        {score} of {PASSWORD_RULES.length} password requirements met
-      </p>
-    </>
-  );
-}
-
-function PasswordMatch({ password, confirm }: { password: string; confirm: string }) {
-  const match = confirm !== "" && confirm === password;
-  const mismatch = confirm !== "" && !match;
-  return (
-    <>
-      <div className="reveal" data-open={match} aria-hidden={!match}>
-        <div>
-          <p className="flex items-center gap-1.5 pt-2 text-meta text-good">
-            <IconCheck className="draw size-3.5" />
-            Passwords match
-          </p>
-        </div>
-      </div>
-      <div className="reveal" data-open={mismatch} aria-hidden={!mismatch}>
-        <div>
-          <p className="flex items-center gap-1.5 pt-2 text-meta text-bad">
-            <IconMinus className="size-3.5" />
-            Passwords don&apos;t match
-          </p>
-        </div>
-      </div>
-    </>
-  );
-}
-
-const SAMPLE = [
-  { met: true, text: "React Native and Next.js in one role" },
-  { met: true, text: "Supabase and Postgres, both shipped" },
-  { met: false, text: "GraphQL, listed as nice to have" },
-];
-
-const SAMPLE_COUNTS: Record<string, number> = { saved: 4, applied: 7, interview: 2, offer: 1 };
-
-/** The first screen shows a real report rather than describing one. */
-function Showcase() {
-  return (
-    <aside aria-hidden className="night relative hidden overflow-hidden border-l border-line lg:flex lg:flex-col lg:justify-center lg:px-14 2xl:px-20">
-      <div className="mx-auto w-full max-w-[520px]">
-        <p className="eyebrow">What you get back</p>
-        <h2 className="t-page mt-3 text-balance">An honest score, and the reason for it.</h2>
-
-        <div className="panel enter-pop mt-8 flex flex-col gap-5 p-6 sm:flex-row sm:items-center">
-          <ScoreDial score={82} verdict="Good fit" size={132} />
-          <div className="min-w-0 flex-1">
-            <p className="text-meta text-muted">Northwind Labs</p>
-            <p className="t-section">Senior Full Stack Engineer</p>
-            <ul className="mt-3 flex flex-col gap-2 border-t border-line pt-3">
-              {SAMPLE.map((row, i) => (
-                <li
-                  key={row.text}
-                  className={cx("enter-up flex items-center gap-2 text-meta", row.met ? "text-ink-soft" : "text-faint")}
-                  style={{ animationDelay: `calc(420ms + ${i} * var(--stagger))` }}
-                >
-                  {row.met ? (
-                    <IconCheck className="size-3.5 shrink-0 text-good" />
-                  ) : (
-                    <IconMinus className="size-3.5 shrink-0 text-warn" />
-                  )}
-                  {row.text}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        <div className="mt-4 grid grid-cols-4 gap-2">
-          {STATUSES.filter((s) => s.id !== "rejected").map((s, i) => (
-            <div
-              key={s.id}
-              data-status={s.id}
-              className="panel enter-up px-3 py-2.5"
-              style={{ animationDelay: `calc(240ms + ${i} * var(--stagger))` }}
-            >
-              <span className="flex items-center gap-1.5 text-meta text-muted">
-                <span className="st-dot" />
-                {s.label}
-              </span>
-              <span className="t-stat mt-1 block">{SAMPLE_COUNTS[s.id]}</span>
-            </div>
-          ))}
-        </div>
-
-        <p className="mt-8 flex items-center gap-2 text-meta text-muted">
-          <IconShield className="size-4 shrink-0 text-good" />
-          Your resume and your applications stay in your own account. Row level security, always on.
-        </p>
-      </div>
-    </aside>
-  );
-}

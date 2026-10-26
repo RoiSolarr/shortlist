@@ -106,6 +106,18 @@ export const IconLogout = ({ className = "size-4" }: P) => (
     <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11" />
   </svg>
 );
+export const IconUser = ({ className = "size-[18px]" }: P) => (
+  <svg viewBox="0 0 24 24" className={className} {...base}>
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4 21a8 8 0 0 1 16 0" />
+  </svg>
+);
+export const IconMail = ({ className = "size-[18px]" }: P) => (
+  <svg viewBox="0 0 24 24" className={className} {...base}>
+    <rect x="3" y="5" width="18" height="14" rx="2" />
+    <path d="m3 7 9 6 9-6" />
+  </svg>
+);
 export const IconEye = ({ className = "size-[18px]" }: P) => (
   <svg viewBox="0 0 24 24" className={className} {...base}>
     <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />

@@ -9,7 +9,7 @@ import { STATUSES } from "@/lib/status";
 import type { JobStatus } from "@/lib/types";
 import { BlockingOverlay } from "./BlockingOverlay";
 import { useTravellingIndicator } from "./useIndicator";
-import { IconBoard, IconFile, IconLogout, IconSpark, Logo, Spinner } from "./icons";
+import { IconBoard, IconFile, IconSpark, IconUser, Logo, Spinner } from "./icons";
 
 const NAV = [
   { href: "/", label: "Analyze", icon: IconSpark, detail: "Loading your recent runs." },
@@ -38,7 +38,9 @@ const ShellContext = createContext<{
   navigate: (e: React.MouseEvent | null, busy: Busy) => void;
   /** Blocks the screen while work on this page runs. Call the result to release it. */
   block: (busy: Busy) => () => void;
-}>({ navigate: () => {}, block: () => () => {} });
+  /** Signs out behind the "Signing out" overlay and lands on the login page. */
+  signOut: () => void;
+}>({ navigate: () => {}, block: () => () => {}, signOut: () => {} });
 
 export const useShell = () => useContext(ShellContext);
 
@@ -47,6 +49,7 @@ function navIndex(pathname: string) {
   if (pathname === "/") return 0;
   if (pathname.startsWith("/board") || pathname.startsWith("/jobs")) return 1;
   if (pathname.startsWith("/resume")) return 2;
+  if (pathname.startsWith("/account")) return 3;
   return 0;
 }
 
@@ -113,7 +116,17 @@ export function AppShell({
     };
   }, []);
 
-  const shell = useMemo(() => ({ navigate, block }), [navigate, block]);
+  const signOut = useCallback(async () => {
+    // The overlay stays up through the navigation, so there is no flash of
+    // the signed in shell on the way out.
+    setSigningOut(true);
+    await createClient().auth.signOut();
+    router.replace("/login");
+    router.refresh();
+  }, [router]);
+
+  const shell = useMemo(() => ({ navigate, block, signOut }), [navigate, block, signOut]);
+  const onAccount = pathname.startsWith("/account");
 
   function startNav(e: React.MouseEvent, href: string, busy: Busy) {
     if (navIndex(href) === navIndex(pathname)) return;
@@ -148,15 +161,6 @@ export function AppShell({
 
   const overlay = navigating ?? working;
 
-  async function signOut() {
-    // The overlay stays up through the navigation, so there is no flash of
-    // the signed in shell on the way out.
-    setSigningOut(true);
-    await createClient().auth.signOut();
-    router.replace("/login");
-    router.refresh();
-  }
-
   return (
     <>
       <div className="min-h-dvh md:grid md:grid-cols-[var(--sidebar)_1fr]" inert={signingOut || overlay !== null || undefined}>
@@ -172,7 +176,8 @@ export function AppShell({
 
           <p className="eyebrow px-3 pb-2">Workspace</p>
           <nav ref={side.listRef as React.Ref<HTMLElement>} className="relative flex flex-col gap-0.5" aria-label="Main">
-            {side.box && (
+            {/* Hidden on Account, which is none of these three */}
+            {side.box && activeIndex >= 0 && (
               <span
                 aria-hidden
                 data-ready={side.ready}
@@ -222,8 +227,8 @@ export function AppShell({
           <div className="mt-auto flex flex-col gap-3 pt-5">
             <ResumeCard resume={resume} hasResume={hasResume} />
 
-            {/* Avatar, email and sign out in one block. The text column can
-                shrink, so a long address truncates instead of overlapping. */}
+            {/* Avatar, email and the way to the account page in one block. The text
+                column can shrink, so a long address truncates instead of overlapping. */}
             <div className="flex min-w-0 items-center gap-2.5 border-t border-line px-1 pt-3">
               <span className="grid size-7 shrink-0 place-items-center rounded-full bg-sunken text-[11px] font-bold text-ink-soft ring-1 ring-line">
                 {initialsFromEmail(email)}
@@ -232,12 +237,17 @@ export function AppShell({
                 <span className="truncate text-meta text-ink-soft" title={email}>
                   {email}
                 </span>
-                <button
-                  onClick={signOut}
-                  className="w-fit text-meta text-faint transition-colors hover:text-ink"
+                <Link
+                  href="/account"
+                  onClick={(e) => !onAccount && navigate(e, { title: "Account", detail: "Loading your account." })}
+                  aria-current={onAccount ? "page" : undefined}
+                  className={cx(
+                    "w-fit text-meta transition-colors hover:text-ink",
+                    onAccount ? "font-semibold text-ink" : "text-faint",
+                  )}
                 >
-                  Sign out
-                </button>
+                  Account
+                </Link>
               </span>
             </div>
           </div>
@@ -252,9 +262,15 @@ export function AppShell({
             <Logo className="size-6" />
             <span className="t-section">Shortlist</span>
           </div>
-          <button onClick={signOut} className="btn btn-ghost btn-sm" aria-label="Sign out">
-            <IconLogout />
-          </button>
+          <Link
+            href="/account"
+            onClick={(e) => !onAccount && navigate(e, { title: "Account", detail: "Loading your account." })}
+            aria-current={onAccount ? "page" : undefined}
+            className={cx("btn btn-ghost btn-sm", onAccount && "text-ink")}
+            aria-label="Account"
+          >
+            <IconUser className="size-4" />
+          </Link>
         </header>
 
         <NavProgress active={pendingHref !== null} />
@@ -272,7 +288,7 @@ export function AppShell({
           className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 border-t border-line pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
           style={{ background: "color-mix(in oklab, var(--surface) 92%, transparent)" }}
         >
-          {tabs.box && (
+          {tabs.box && activeIndex >= 0 && (
             <span
               aria-hidden
               data-ready={tabs.ready}
