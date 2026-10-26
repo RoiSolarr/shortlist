@@ -1,0 +1,1346 @@
+@import "tailwindcss";
+
+/* ==================================================================
+   SHEET 00 · Design system
+
+   Build every screen from this sheet. Colour means something or it is
+   not used, numbers are tabular, and every control ships four states.
+
+   1. Two neutral families, nine steps
+   2. Colour carries meaning only
+   3. One family, eight sizes
+   4. Component states, all drawn
+   5. Loading has a vocabulary
+   6. Dark mode is chosen, not inverted
+================================================================== */
+:root {
+  /* Surfaces and ink */
+  --canvas: #eceef2;
+  --surface: #ffffff;
+  --sunken: #f5f6f8;
+  --raised: #ffffff;
+  --ink: #141924;
+  --ink-soft: #2a3140;
+  --muted: #5d6676;
+  --faint: #8a93a3;
+  --line: #dce0e6;
+  --line-strong: #c6ccd5;
+
+  /* Focus ring only, never decoration */
+  --focus: #3a4fd6;
+
+  --on-ink: #ffffff;
+
+  /* Meaning colours */
+  --good: #12784a;
+  --warn: #a75a06;
+  --bad: #b4233f;
+
+  /* Pipeline stages */
+  --st-saved: #627089;
+  --st-applied: #2459d6;
+  --st-interview: #7a3fd4;
+  --st-offer: #12784a;
+  --st-rejected: #a52a46;
+
+  /* Radius: 8, 10, 12, 18 */
+  --radius-sm: 8px;
+  --radius-btn: 10px;
+  --radius: 12px;
+  --radius-lg: 18px;
+
+  /* Elevation: one lift token, plus the held card while dragging */
+  --shadow-lift: 0 1px 0 rgb(20 25 36 / 0.04), 0 12px 32px -12px rgb(20 25 36 / 0.22);
+  --shadow-drag: 0 1px 0 rgb(20 25 36 / 0.06), 0 26px 50px -18px rgb(20 25 36 / 0.34);
+  --shadow-seg: 0 1px 2px rgb(20 25 36 / 0.1), 0 0 0 1px rgb(20 25 36 / 0.06);
+
+  /* Controls: buttons are height 38, radius 10, weight 600 */
+  --control-h: 38px;
+  --control-h-sm: 32px;
+  --control-h-lg: 42px;
+
+  /* Layout: content 1080, rail 296, page padding 28 / 30 */
+  --gutter: 20px;
+  --page-top: 28px;
+  --w-page: 1080px;
+  --w-wide: 1560px;
+  --w-rail: 296px;
+  --measure: 68ch;
+  --sidebar: 248px;
+
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* ---------------- Motion ---------------- */
+  --dur-micro: 120ms;
+  --dur-exit: 160ms;
+  --dur-enter: 240ms;
+  --dur-surface: 320ms;
+  --dur-seq: 420ms;
+  --dur-score: 900ms;
+
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  --stagger: 50ms;
+
+  /* Distance tokens. Reduced motion sets these to zero. */
+  --travel-sm: 4px;
+  --travel: 8px;
+  --travel-lg: 14px;
+
+  /* Canvas material: fine desaturated noise, inline, no asset download */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  --grain-opacity: 0.03;
+
+  color-scheme: light;
+  interpolate-size: allow-keywords;
+}
+
+/* Dark is chosen against #0d1016, not flipped. Greens and reds lift in
+   lightness so the score bands stay readable either way. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --canvas: #0d1016;
+    --surface: #151a22;
+    --sunken: #11151c;
+    --raised: #1b212b;
+
+    --ink: #e8ebf1;
+    --ink-soft: #c9ced8;
+    --muted: #98a1b1;
+    --faint: #6b7485;
+
+    --line: #252c37;
+    --line-strong: #343c4a;
+
+    --focus: #8c9bff;
+    --on-ink: #0d1016;
+
+    --good: #3fbf82;
+    --warn: #e09a3d;
+    --bad: #f0687f;
+
+    --st-saved: #9aa6bb;
+    --st-applied: #6f9bff;
+    --st-interview: #b18cff;
+    --st-offer: #3fbf82;
+    --st-rejected: #f0687f;
+
+    --shadow-lift: 0 1px 0 rgb(0 0 0 / 0.3), 0 16px 36px -14px rgb(0 0 0 / 0.7);
+    --shadow-drag: 0 1px 0 rgb(0 0 0 / 0.4), 0 30px 56px -20px rgb(0 0 0 / 0.8);
+    --shadow-seg: 0 1px 2px rgb(0 0 0 / 0.5), 0 0 0 1px rgb(255 255 255 / 0.06);
+
+    --grain-opacity: 0.035;
+
+    color-scheme: dark;
+  }
+}
+
+@media (min-width: 768px) {
+  :root {
+    --gutter: 30px;
+  }
+}
+
+@theme inline {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--mono);
+
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-sunken: var(--sunken);
+  --color-raised: var(--raised);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-focus: var(--focus);
+  --color-on-ink: var(--on-ink);
+  --color-good: var(--good);
+  --color-warn: var(--warn);
+  --color-bad: var(--bad);
+
+  /* ---------------- One family, eight sizes ----------------
+     Page title 30/700, job title 23/700, section 16/650,
+     body 16.5/400, interface 13.5/400, meta 12.5, eyebrow
+     10.5/700, stat 28/700. Tabular figures on every number. */
+  --text-page: 1.875rem;
+  --text-page--line-height: 1.1;
+  --text-page--letter-spacing: -0.028em;
+
+  --text-job: 1.4375rem;
+  --text-job--line-height: 1.16;
+  --text-job--letter-spacing: -0.025em;
+
+  --text-stat: 1.75rem;
+  --text-stat--line-height: 1.05;
+  --text-stat--letter-spacing: -0.02em;
+
+  --text-section: 1rem;
+  --text-section--line-height: 1.3;
+  --text-section--letter-spacing: -0.012em;
+
+  --text-body: 1.03125rem;
+  --text-body--line-height: 1.55;
+
+  --text-ui: 0.84375rem;
+  --text-ui--line-height: 1.45;
+
+  --text-meta: 0.78125rem;
+  --text-meta--line-height: 1.4;
+
+  --text-eyebrow: 0.65625rem;
+  --text-eyebrow--line-height: 1.2;
+  --text-eyebrow--letter-spacing: 0.12em;
+}
+
+html {
+  background: var(--canvas);
+}
+
+body {
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-ui);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* The canvas reads as a material rather than flat grey. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: radial-gradient(120% 70% at 50% -10%, color-mix(in oklab, var(--surface) 50%, transparent), transparent 70%);
+}
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--grain);
+  opacity: var(--grain-opacity);
+}
+
+::selection {
+  background: color-mix(in oklab, var(--focus) 22%, transparent);
+}
+
+/* The focus ring is the only place this blue appears */
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.scroll-x {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+@layer components {
+/* ------------------------------------------------------------------
+   Type helpers where the weight is part of the style
+------------------------------------------------------------------- */
+.t-page {
+  font-size: var(--text-page);
+  line-height: 1.1;
+  letter-spacing: -0.028em;
+  font-weight: 700;
+}
+.t-job {
+  font-size: var(--text-job);
+  line-height: 1.16;
+  letter-spacing: -0.025em;
+  font-weight: 700;
+}
+.t-section {
+  font-size: var(--text-section);
+  line-height: 1.3;
+  letter-spacing: -0.012em;
+  font-weight: 650;
+}
+.t-stat {
+  font-size: var(--text-stat);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.eyebrow {
+  font-size: var(--text-eyebrow);
+  line-height: 1.2;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.mono {
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+}
+
+/* ------------------------------------------------------------------
+   Layout
+------------------------------------------------------------------- */
+.page {
+  width: 100%;
+  max-width: calc(var(--w-page) + var(--gutter) * 2);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+  padding-block: var(--page-top) 56px;
+}
+.page-wide {
+  width: 100%;
+  max-width: calc(var(--w-wide) + var(--gutter) * 2);
+  margin-inline: auto;
+  padding-block: var(--page-top) 40px;
+}
+.page-wide > .gutter {
+  padding-inline: var(--gutter);
+}
+.measure {
+  max-width: var(--measure);
+}
+/* Main column plus the context rail. The rail drops under the content
+   below 1100px, as the sheet specifies. */
+.with-rail {
+  display: grid;
+  gap: 24px;
+  align-items: start;
+}
+@media (min-width: 1100px) {
+  .with-rail {
+    grid-template-columns: minmax(0, 1fr) var(--w-rail);
+    gap: 28px;
+  }
+}
+
+/* ------------------------------------------------------------------
+   Buttons · height 38, radius 10, weight 600, four states
+------------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: var(--control-h);
+  padding: 0 14px;
+  border-radius: var(--radius-btn);
+  font-size: var(--text-ui);
+  line-height: 1;
+  font-weight: 600;
+  white-space: nowrap;
+  transition:
+    background-color var(--dur-micro) var(--ease-out),
+    border-color var(--dur-micro) var(--ease-out),
+    color var(--dur-micro) var(--ease-out),
+    box-shadow var(--dur-micro) var(--ease-out),
+    transform var(--dur-micro) var(--ease-out);
+}
+.btn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.995);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn[aria-busy="true"]:disabled {
+  opacity: 0.9;
+  cursor: progress;
+}
+.btn-primary {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--ink-soft);
+}
+.btn-quiet {
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+.btn-quiet:hover:not(:disabled) {
+  border-color: var(--line-strong);
+  background: var(--sunken);
+}
+.btn-ghost {
+  color: var(--muted);
+}
+.btn-ghost:hover:not(:disabled) {
+  color: var(--ink);
+  background: color-mix(in oklab, var(--ink) 6%, transparent);
+}
+.btn-danger {
+  color: var(--bad);
+  border: 1px solid color-mix(in oklab, var(--bad) 30%, transparent);
+}
+.btn-danger:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--bad) 8%, transparent);
+}
+.btn-sm {
+  height: var(--control-h-sm);
+  padding: 0 10px;
+  font-size: var(--text-meta);
+  border-radius: var(--radius-sm);
+}
+.btn-lg {
+  height: var(--control-h-lg);
+  padding: 0 18px;
+}
+/* The keyboard hint inside a button */
+.kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 5px;
+  font-size: 10.5px;
+  font-weight: 600;
+  background: color-mix(in oklab, currentColor 16%, transparent);
+}
+
+/* ------------------------------------------------------------------
+   Fields · rest, focus, invalid, disabled
+------------------------------------------------------------------- */
+.field {
+  width: 100%;
+  min-height: var(--control-h);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-btn);
+  padding: 8px 12px;
+  font-size: var(--text-ui);
+  color: var(--ink);
+  transition:
+    border-color var(--dur-micro) var(--ease-out),
+    box-shadow var(--dur-micro) var(--ease-out),
+    background-color var(--dur-micro) var(--ease-out);
+}
+.field::placeholder {
+  color: var(--faint);
+}
+.field:hover:not(:disabled):not(:focus) {
+  border-color: var(--line-strong);
+}
+.field:focus {
+  outline: none;
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--focus) 16%, transparent);
+}
+.field:disabled {
+  background: var(--sunken);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+.field[aria-invalid="true"] {
+  border-color: var(--bad);
+}
+.field[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--bad) 16%, transparent);
+}
+.field::-ms-reveal,
+.field::-ms-clear {
+  display: none;
+}
+.label {
+  display: block;
+  font-size: var(--text-meta);
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin-bottom: 6px;
+}
+
+/* ------------------------------------------------------------------
+   Segmented control
+------------------------------------------------------------------- */
+.seg {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius-btn);
+  background: var(--sunken);
+  border: 1px solid var(--line);
+}
+.seg-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-ui);
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+  transition:
+    color var(--dur-micro) var(--ease-out),
+    background-color var(--dur-micro) var(--ease-out),
+    box-shadow var(--dur-micro) var(--ease-out);
+}
+.seg-item:hover:not([aria-selected="true"]):not([aria-checked="true"]):not(:disabled) {
+  color: var(--ink);
+}
+.seg-item[aria-selected="true"],
+.seg-item[aria-checked="true"] {
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: var(--shadow-seg);
+}
+
+/* ------------------------------------------------------------------
+   Surfaces
+------------------------------------------------------------------- */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+.panel-raised {
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lift);
+}
+.panel-sunken {
+  background: var(--sunken);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+/**
+ * A surface that is dark in both themes. It re-declares the chosen dark
+ * steps locally, so anything rendered inside it, chips and dials included,
+ * picks the dark palette instead of being inverted.
+ */
+.night {
+  --canvas: #0d1016;
+  --surface: #151a22;
+  --sunken: #11151c;
+  --raised: #1b212b;
+  --ink: #e8ebf1;
+  --ink-soft: #c9ced8;
+  --muted: #98a1b1;
+  --faint: #6b7485;
+  --line: #252c37;
+  --line-strong: #343c4a;
+  --on-ink: #0d1016;
+  --good: #3fbf82;
+  --warn: #e09a3d;
+  --bad: #f0687f;
+  --st-saved: #9aa6bb;
+  --st-applied: #6f9bff;
+  --st-interview: #b18cff;
+  --st-offer: #3fbf82;
+  --st-rejected: #f0687f;
+  background: #0d1016;
+  color: #e8ebf1;
+  color-scheme: dark;
+}
+
+/* The one dark card in light mode: used for the automation note */
+.panel-ink {
+  background: #0f131a;
+  color: #e8ebf1;
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+}
+@media (prefers-color-scheme: dark) {
+  .panel-ink {
+    background: var(--raised);
+    border-color: var(--line);
+  }
+}
+
+/* ------------------------------------------------------------------
+   Meaning: stages, score bands, chips
+------------------------------------------------------------------- */
+[data-status="saved"] { --st: var(--st-saved); }
+[data-status="applied"] { --st: var(--st-applied); }
+[data-status="interview"] { --st: var(--st-interview); }
+[data-status="offer"] { --st: var(--st-offer); }
+[data-status="rejected"] { --st: var(--st-rejected); }
+
+.st-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--st);
+  flex: none;
+}
+.st-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: var(--text-meta);
+  font-weight: 600;
+  color: var(--st);
+  background: color-mix(in oklab, var(--st) 12%, transparent);
+}
+
+[data-tone="high"] { --tone: var(--good); }
+[data-tone="mid"] { --tone: var(--warn); }
+[data-tone="low"] { --tone: var(--bad); }
+[data-tone="none"] { --tone: var(--faint); }
+
+/* The band decides the tint */
+.score {
+  display: inline-grid;
+  place-items: center;
+  min-width: 38px;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-ui);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--tone);
+  background: color-mix(in oklab, var(--tone) 12%, transparent);
+  border: 1px solid color-mix(in oklab, var(--tone) 22%, transparent);
+}
+.score-sm {
+  min-width: 32px;
+  height: 24px;
+  font-size: var(--text-meta);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 9px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-meta);
+  font-weight: 550;
+}
+.chip-match {
+  color: var(--ink);
+  background: color-mix(in oklab, var(--good) 11%, transparent);
+  border: 1px solid color-mix(in oklab, var(--good) 20%, transparent);
+}
+.chip-gap {
+  color: var(--ink-soft);
+  background: color-mix(in oklab, var(--warn) 11%, transparent);
+  border: 1px solid color-mix(in oklab, var(--warn) 22%, transparent);
+}
+.chip-plain {
+  color: var(--ink-soft);
+  background: var(--sunken);
+  border: 1px solid var(--line);
+}
+.chip-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--faint);
+  font-weight: 600;
+}
+
+/* Inline notices that carry a meaning colour */
+.notice {
+  border-radius: var(--radius);
+  border: 1px solid;
+  padding: 12px 14px;
+  font-size: var(--text-ui);
+}
+.notice-bad {
+  border-color: color-mix(in oklab, var(--bad) 28%, transparent);
+  background: color-mix(in oklab, var(--bad) 6%, var(--surface));
+  color: var(--ink);
+}
+.notice-warn {
+  border-color: color-mix(in oklab, var(--warn) 30%, transparent);
+  background: color-mix(in oklab, var(--warn) 7%, var(--surface));
+  color: var(--ink);
+}
+.notice-quiet {
+  border-color: var(--line);
+  background: var(--sunken);
+  color: var(--ink-soft);
+}
+
+/* ------------------------------------------------------------------
+   Stat tiles
+------------------------------------------------------------------- */
+.stat {
+  padding: 14px 16px;
+}
+.stat-label {
+  font-size: var(--text-meta);
+  color: var(--muted);
+}
+.stat-value {
+  font-size: var(--text-stat);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+}
+.stat-foot {
+  font-size: var(--text-meta);
+  color: var(--faint);
+  margin-top: 2px;
+}
+
+/* ------------------------------------------------------------------
+   The stage track on a report
+------------------------------------------------------------------- */
+.stage-track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-btn);
+  background: var(--surface);
+  overflow: hidden;
+}
+.stage-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 40px;
+  padding: 0 10px;
+  font-size: var(--text-ui);
+  font-weight: 600;
+  color: var(--muted);
+  border-left: 1px solid var(--line);
+  white-space: nowrap;
+  transition:
+    background-color var(--dur-micro) var(--ease-out),
+    color var(--dur-micro) var(--ease-out);
+}
+.stage-step:first-child {
+  border-left: 0;
+}
+.stage-step:hover:not(:disabled):not([aria-checked="true"]) {
+  background: var(--sunken);
+  color: var(--ink);
+}
+.stage-step[aria-checked="true"] {
+  background: var(--st);
+  color: #fff;
+}
+.stage-step[aria-checked="true"] .st-dot {
+  background: color-mix(in oklab, #fff 85%, transparent);
+}
+.stage-step:disabled {
+  cursor: progress;
+}
+/* Rejected is not a step forward, so it sits apart */
+.stage-track .stage-step[data-apart="true"] {
+  border-left: 1px solid var(--line-strong);
+}
+
+/* ------------------------------------------------------------------
+   Requirement coverage bar
+------------------------------------------------------------------- */
+.coverage {
+  display: flex;
+  gap: 3px;
+}
+.coverage-seg {
+  height: 7px;
+  flex: 1 1 0;
+  border-radius: 999px;
+  background: var(--line);
+}
+.coverage-seg[data-kind="met"] { background: var(--good); }
+.coverage-seg[data-kind="partial"] { background: var(--warn); }
+.coverage-seg[data-kind="missing"] { background: var(--bad); }
+
+/* ------------------------------------------------------------------
+   Run rail
+------------------------------------------------------------------- */
+.run-step {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 10px 0;
+  position: relative;
+}
+.run-step + .run-step::before {
+  content: "";
+  position: absolute;
+  left: 12.5px;
+  top: -14px;
+  width: 1px;
+  height: 24px;
+  background: var(--line);
+}
+.run-step[data-state="done"] + .run-step::before {
+  background: var(--good);
+}
+.run-badge {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--faint);
+}
+.run-step[data-state="done"] .run-badge {
+  border-color: color-mix(in oklab, var(--good) 35%, transparent);
+  background: color-mix(in oklab, var(--good) 12%, transparent);
+  color: var(--good);
+}
+.run-step[data-state="now"] .run-badge {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--on-ink);
+}
+.run-step[data-state="failed"] .run-badge {
+  border-color: color-mix(in oklab, var(--bad) 40%, transparent);
+  background: color-mix(in oklab, var(--bad) 10%, transparent);
+  color: var(--bad);
+}
+
+/* The blinking caret on the live substep */
+.caret {
+  display: inline-block;
+  width: 1px;
+  height: 1em;
+  margin-left: 1px;
+  vertical-align: -2px;
+  background: currentColor;
+  animation: blink 1s steps(1) infinite;
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* ------------------------------------------------------------------
+   Board
+------------------------------------------------------------------- */
+.column {
+  border-radius: var(--radius);
+  background: color-mix(in oklab, var(--ink) 3.5%, transparent);
+  transition: background-color var(--dur-enter) var(--ease-out);
+}
+.column[data-lit="true"] {
+  background: color-mix(in oklab, var(--st) 9%, transparent);
+}
+.column-rule {
+  height: 3px;
+  border-radius: 999px 999px 0 0;
+  background: var(--st);
+}
+.drop-slot {
+  display: block;
+  height: 74px;
+  margin-bottom: 8px;
+  border-radius: var(--radius);
+  border: 1px dashed var(--st, var(--line-strong));
+  background: color-mix(in oklab, var(--st, var(--ink)) 8%, transparent);
+}
+.card-held {
+  cursor: grabbing;
+  transform: rotate(2deg) scale(1.02);
+  box-shadow: var(--shadow-drag);
+  border-color: var(--line-strong);
+}
+/* The grip appears on hover only */
+.grip {
+  opacity: 0;
+  transition: opacity var(--dur-micro) var(--ease-out);
+}
+.lift:hover .grip,
+.grip:focus-visible {
+  opacity: 1;
+}
+
+/* ------------------------------------------------------------------
+   Resume dropzone
+------------------------------------------------------------------- */
+.dropzone {
+  border: 1.5px dashed var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  transition:
+    border-color var(--dur-enter) var(--ease-out),
+    background-color var(--dur-enter) var(--ease-out);
+}
+.dropzone[data-dragging="true"] {
+  border-style: solid;
+  border-color: var(--focus);
+  background: color-mix(in oklab, var(--focus) 5%, var(--surface));
+}
+.version-row {
+  position: relative;
+  transition: background-color var(--dur-micro) var(--ease-out);
+}
+.version-row[data-selected="true"] {
+  background: var(--sunken);
+}
+.version-row[data-active="true"]::before {
+  content: "";
+  position: absolute;
+  inset-block: 8px;
+  inset-inline-start: 0;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--good);
+}
+/* A phrase in the parsed text that the model matched */
+.hit {
+  border-radius: 4px;
+  padding: 1px 3px;
+  background: color-mix(in oklab, var(--good) 15%, transparent);
+}
+
+/* ------------------------------------------------------------------
+   Navigation
+------------------------------------------------------------------- */
+.nav-indicator {
+  position: absolute;
+  inset-block-start: 0;
+  /* Spans the nav, so the pill is as wide as the item it sits behind */
+  inset-inline: 0;
+  z-index: 0;
+  border-radius: var(--radius-btn);
+  background: var(--ink);
+  opacity: 0;
+  pointer-events: none;
+}
+.nav-indicator-bar {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  z-index: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--ink);
+  opacity: 0;
+  pointer-events: none;
+}
+.nav-indicator[data-ready="true"],
+.nav-indicator-bar[data-ready="true"],
+.tab-underline[data-ready="true"] {
+  opacity: 1;
+  transition:
+    transform var(--dur-surface) var(--ease-emphasized),
+    opacity var(--dur-enter) var(--ease-out);
+}
+/* The label waits for the pill to arrive before it turns, and leaves
+   immediately, so it is never white on the canvas */
+.nav-item {
+  transition: color var(--dur-micro) var(--ease-out);
+}
+.nav-item[aria-current="page"] {
+  color: var(--on-ink);
+  transition-delay: 180ms;
+}
+.tab-underline {
+  position: absolute;
+  inset-block-end: -1px;
+  inset-inline-start: 0;
+  z-index: 1;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--ink);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------
+   Scannable list rows
+------------------------------------------------------------------- */
+.row {
+  padding: 12px 14px;
+  transition: background-color var(--dur-micro) var(--ease-out);
+}
+.row:hover {
+  background: var(--sunken);
+}
+.row-chevron {
+  opacity: 0;
+  transform: translateX(calc(var(--travel-sm) * -1));
+  transition:
+    opacity var(--dur-micro) var(--ease-out),
+    transform var(--dur-micro) var(--ease-out);
+}
+.row:hover .row-chevron,
+.row:focus-visible .row-chevron {
+  opacity: 1;
+  transform: none;
+}
+}
+
+/* ==================================================================
+   Motion
+   Animate transform, opacity, filter and clip-path only.
+   Exits are faster than entrances. Entrances never block input.
+================================================================== */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(var(--travel)); }
+  to { opacity: 1; transform: none; }
+}
+.rise {
+  animation: rise var(--dur-seq) var(--ease-out) both;
+}
+
+@keyframes scan {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+.scanline {
+  animation: scan 1.4s var(--ease-in-out) infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.spin {
+  animation: spin 0.8s linear infinite;
+}
+
+/* ---- Entrances ---- */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes enter-up {
+  from { opacity: 0; transform: translateY(var(--travel)); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes enter-pop {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+.enter-fade { animation: fade-in var(--dur-enter) var(--ease-out) both; }
+.enter-up { animation: enter-up var(--dur-enter) var(--ease-out) both; }
+.enter-pop { animation: enter-pop var(--dur-enter) var(--ease-spring) both; }
+.enter-surface { animation: enter-up var(--dur-surface) var(--ease-out) both; }
+
+/* One orchestrated sequence: identity, score, chips, letter. */
+.seq {
+  animation: enter-up var(--dur-seq) var(--ease-out) both;
+  animation-delay: calc(var(--seq, 0) * 60ms);
+}
+
+/* ---- Page movement, direction aware ---- */
+@keyframes page-in {
+  from { opacity: 0; transform: translate3d(var(--enter-x, 0px), var(--enter-y, 0px), 0); }
+  to { opacity: 1; transform: none; }
+}
+.page-enter {
+  animation: page-in var(--dur-enter) var(--ease-emphasized) both;
+}
+
+/* ---- Progress rail ----
+   Width is real progress. The 90px highlight only says the server is
+   still alive. */
+.rail {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  height: 3px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--ink) 10%, transparent);
+}
+.rail-fill {
+  display: block;
+  position: relative;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--bar, var(--ink));
+  transition: width var(--dur-surface) var(--ease-out);
+  overflow: hidden;
+}
+.rail-fill::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 90px;
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, #fff 65%, transparent), transparent);
+  transform: translateX(-100%);
+  animation: sweep-rail 1.4s var(--ease-in-out) infinite;
+}
+@keyframes sweep-rail {
+  to { transform: translateX(calc(100% + 90px)); }
+}
+
+/* Indeterminate variant, for waits with no known total */
+.track {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--ink) 10%, transparent);
+}
+@keyframes indeterminate-a {
+  0% { transform: translateX(-105%) scaleX(0.5); }
+  55% { transform: translateX(95%) scaleX(0.85); }
+  100% { transform: translateX(250%) scaleX(0.5); }
+}
+.track > .track-seg {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 40%;
+  border-radius: 999px;
+  background: var(--bar, var(--ink));
+  transform-origin: left center;
+  animation: indeterminate-a 1.9s var(--ease-in-out) infinite;
+}
+.track > .track-seg-2 {
+  animation-delay: -0.95s;
+  opacity: 0.5;
+}
+.nav-progress {
+  animation: fade-in var(--dur-micro) var(--ease-out) 90ms both;
+}
+
+/* ---- Skeletons: a diagonal sweep, never a harsh flash ---- */
+@keyframes sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+.skel {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklab, var(--ink) 7%, transparent);
+}
+.skel::after {
+  content: "";
+  position: absolute;
+  inset: -50%;
+  background: linear-gradient(100deg, transparent 30%, color-mix(in oklab, var(--surface) 75%, transparent) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: sweep 1.6s var(--ease-in-out) infinite;
+}
+
+/* ---- Checks that draw themselves ---- */
+@keyframes draw {
+  from { stroke-dashoffset: var(--len, 26); }
+  to { stroke-dashoffset: 0; }
+}
+.draw {
+  stroke-dasharray: var(--len, 26);
+  animation: draw 220ms var(--ease-out) both;
+}
+
+/* ---- A line that draws down as it enters ---- */
+@keyframes draw-down {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+.draw-down {
+  transform-origin: top center;
+  animation: draw-down var(--dur-surface) var(--ease-out) both;
+}
+
+/* ---- Toasts ---- */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(var(--travel)) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes toast-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(calc(var(--travel-sm) * -1)) scale(0.98); }
+}
+.toast-in { animation: toast-in var(--dur-enter) var(--ease-spring) both; }
+.toast-out { animation: toast-out var(--dur-exit) var(--ease-in) both; }
+
+/* ---- The blocking overlay ---- */
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes overlay-content-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+.overlay-in { animation: overlay-in var(--dur-micro) var(--ease-out) both; }
+.overlay-content-in { animation: overlay-content-in var(--dur-enter) var(--ease-out) both; }
+
+/* ---- Height reveals ---- */
+.reveal {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows var(--dur-surface) var(--ease-out),
+    opacity var(--dur-exit) var(--ease-in);
+}
+.reveal > * {
+  overflow: hidden;
+  min-height: 0;
+}
+.reveal[data-open="true"] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition:
+    grid-template-rows var(--dur-surface) var(--ease-out),
+    opacity var(--dur-enter) var(--ease-out);
+}
+.reveal-x {
+  display: grid;
+  grid-template-columns: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-columns var(--dur-surface) var(--ease-out),
+    opacity var(--dur-exit) var(--ease-in);
+}
+.reveal-x > * {
+  overflow: hidden;
+  min-width: 0;
+}
+.reveal-x[data-open="true"] {
+  grid-template-columns: 1fr;
+  opacity: 1;
+  transition:
+    grid-template-columns var(--dur-surface) var(--ease-out),
+    opacity var(--dur-enter) var(--ease-out);
+}
+
+.disclose::details-content {
+  block-size: 0;
+  overflow: clip;
+  opacity: 0;
+  transition:
+    block-size var(--dur-surface) var(--ease-out),
+    opacity var(--dur-surface) var(--ease-out),
+    content-visibility var(--dur-surface) allow-discrete;
+}
+.disclose[open]::details-content {
+  block-size: auto;
+  opacity: 1;
+}
+
+/* ---- A button label that morphs instead of swapping ---- */
+.morph {
+  display: grid;
+  place-items: center;
+}
+.morph > * {
+  grid-area: 1 / 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition:
+    opacity var(--dur-micro) var(--ease-out),
+    transform var(--dur-micro) var(--ease-out);
+}
+.morph > .morph-b {
+  opacity: 0;
+  transform: scale(0.92);
+}
+.morph[data-on="true"] > .morph-a {
+  opacity: 0;
+  transform: scale(0.92);
+}
+.morph[data-on="true"] > .morph-b {
+  opacity: 1;
+  transform: none;
+}
+
+.back-arrow {
+  transition: transform var(--dur-micro) var(--ease-out);
+}
+.back-link:hover .back-arrow {
+  transform: translateX(calc(var(--travel-sm) * -1));
+}
+
+/* ---- Lifts that respond to a pointer ---- */
+.lift {
+  transition:
+    transform var(--dur-micro) var(--ease-out),
+    box-shadow var(--dur-micro) var(--ease-out),
+    border-color var(--dur-micro) var(--ease-out);
+}
+@media (hover: hover) {
+  .lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lift);
+  }
+}
+
+.cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 120px;
+}
+
+/* ==================================================================
+   Reduced motion: a graceful tier, not a blanket kill switch.
+   Distance goes to zero and long sequences shorten, while short
+   opacity crossfades stay, so every state change is still legible.
+================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --travel-sm: 0px;
+    --travel: 0px;
+    --travel-lg: 0px;
+    --dur-surface: 200ms;
+    --dur-seq: 200ms;
+    --dur-score: 1ms;
+    --ease-spring: var(--ease-out);
+  }
+  .page-enter,
+  .enter-up,
+  .enter-pop,
+  .enter-surface,
+  .seq,
+  .rise,
+  .toast-in {
+    animation-name: fade-in;
+    animation-duration: var(--dur-enter);
+  }
+  .toast-out {
+    animation-name: fade-in;
+    animation-direction: reverse;
+    animation-duration: var(--dur-exit);
+  }
+  .spin,
+  .scanline,
+  .skel::after,
+  .caret,
+  .rail-fill::after,
+  .track > .track-seg,
+  .track > .track-seg-2 {
+    animation: none;
+  }
+  .track > .track-seg {
+    width: 38%;
+    transform: none;
+  }
+  .track > .track-seg-2 {
+    display: none;
+  }
+  .draw {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .draw-down {
+    animation-name: fade-in;
+  }
+  .lift:hover {
+    transform: none;
+  }
+  .nav-item[aria-current="page"] {
+    transition-delay: 0ms;
+  }
+}

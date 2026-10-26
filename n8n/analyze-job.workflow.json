@@ -1,0 +1,456 @@
+{
+  "name": "Job Assistant: Analyze Job",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "analyze-job",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "b4d981bd-d53d-4198-b4cd-216bcb23a39e",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "d2c358ac-dcd4-409d-aea9-e21a44e42f43",
+      "notesInFlow": true,
+      "notes": "Select your Header Auth credential (name: x-webhook-secret)."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2e444945-56a1-4f1e-9f79-27dd108f6bb6",
+              "name": "supabase_url",
+              "value": "https://YOUR-PROJECT-REF.supabase.co",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "65d7ad2c-866b-4330-bcc5-a69cdfc19fc1",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "64f5c808-1781-4c3b-bda5-e028bfd615c4",
+              "leftValue": "={{ String($('Webhook').first().json.body.description || '').trim() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "45b0ae0b-ea4f-4253-a4be-b51a902cb810",
+      "name": "Has Pasted Text?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Webhook').first().json.body.url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "en-US,en;q=0.9"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text",
+              "outputPropertyName": "data"
+            }
+          },
+          "timeout": 20000
+        }
+      },
+      "id": "c3b20d8b-6c08-4daa-a1cb-bc5d324acbd0",
+      "name": "Fetch Job Page",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        400
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Turns either the pasted description or the fetched HTML into clean text.\n// It also tries to read schema.org JobPosting data, which most job boards embed.\nconst body = $('Webhook').first().json.body || {};\nconst pasted = String(body.description || '').trim();\nconst base = { user_id: body.user_id, job_posting_id: body.job_posting_id || null, url: body.url || null };\n\nconst decode = (s) => String(s || '')\n  .replace(/&nbsp;/gi, ' ')\n  .replace(/&amp;/gi, '&')\n  .replace(/&lt;/gi, '<')\n  .replace(/&gt;/gi, '>')\n  .replace(/&quot;/gi, '\"')\n  .replace(/&#39;|&apos;/gi, \"'\")\n  .replace(/&#(\\d+);/g, (_, n) => String.fromCharCode(Number(n)));\n\nconst htmlToText = (html) => decode(String(html || '')\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, ' ')\n  .replace(/<style[\\s\\S]*?<\\/style>/gi, ' ')\n  .replace(/<noscript[\\s\\S]*?<\\/noscript>/gi, ' ')\n  .replace(/<(nav|footer|header|svg)[\\s\\S]*?<\\/\\1>/gi, ' ')\n  .replace(/<br\\s*\\/?>/gi, '\\n')\n  .replace(/<\\/(p|div|li|h[1-6]|tr|section|article)>/gi, '\\n')\n  .replace(/<li[^>]*>/gi, '\\n• ')\n  .replace(/<[^>]+>/g, ' '))\n  .replace(/[ \\t]+/g, ' ')\n  .replace(/\\n\\s*\\n+/g, '\\n\\n')\n  .trim();\n\nlet text = '';\nlet hints = { title: null, company: null, location: null };\nlet source = 'pasted';\n\nif (pasted) {\n  text = pasted;\n} else {\n  source = 'fetched';\n  const res = $input.first().json || {};\n  const html = typeof res.data === 'string' ? res.data : '';\n\n  // 1) schema.org JobPosting in JSON-LD\n  const blocks = [...html.matchAll(/<script[^>]*application\\/ld\\+json[^>]*>([\\s\\S]*?)<\\/script>/gi)];\n  for (const m of blocks) {\n    try {\n      const parsed = JSON.parse(m[1].trim());\n      const list = Array.isArray(parsed) ? parsed : (parsed['@graph'] || [parsed]);\n      const job = list.find((x) => x && (x['@type'] === 'JobPosting' ||\n        (Array.isArray(x['@type']) && x['@type'].includes('JobPosting'))));\n      if (job) {\n        hints.title = job.title || null;\n        hints.company = (job.hiringOrganization && job.hiringOrganization.name) || null;\n        const loc = Array.isArray(job.jobLocation) ? job.jobLocation[0] : job.jobLocation;\n        const addr = loc && loc.address;\n        hints.location = job.jobLocationType === 'TELECOMMUTE' ? 'Remote'\n          : (addr ? [addr.addressLocality, addr.addressCountry].filter(Boolean).join(', ') : null);\n        text = htmlToText(job.description || '');\n        break;\n      }\n    } catch (e) { /* ignore broken JSON-LD */ }\n  }\n\n  // 2) Fall back to the visible page text\n  if (text.length < 200) {\n    const titleTag = (html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i) || [])[1];\n    if (!hints.title && titleTag) hints.title = decode(titleTag).trim().slice(0, 140);\n    const main = (html.match(/<main[\\s\\S]*?<\\/main>/i) || [])[0] || html;\n    text = htmlToText(main);\n  }\n}\n\ntext = text.slice(0, 15000);\nconst looksBlocked = /sign in|log in to|captcha|enable javascript|access denied/i.test(text.slice(0, 400));\n\nif (text.length < 200 || (source === 'fetched' && looksBlocked && text.length < 800)) {\n  return [{ json: { ...base, ok: false,\n    error: source === 'pasted'\n      ? 'The pasted description is too short. Paste the full job post text.'\n      : 'This job page could not be read automatically. Sites like LinkedIn block it. Paste the job description instead.' } }];\n}\n\nreturn [{ json: { ...base, ok: true, source, input_method: source === 'pasted' ? 'pasted' : 'link', text, hints } }];"
+      },
+      "id": "0484bae8-6b80-4d92-85a1-2959a4f3318d",
+      "name": "Clean Job Text",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        920,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "7c505cf8-bc04-463f-b741-766f769443fd",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "319f8feb-2472-4c56-a4c1-52b46535ba02",
+      "name": "Text Readable?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1140,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ error: $json.error, code: 'UNREADABLE_PAGE' }) }}",
+        "options": {
+          "responseCode": 422
+        }
+      },
+      "id": "57332a84-4a5c-4fd3-a1d2-1ead316adfcb",
+      "name": "Respond: Unreadable",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1380,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.supabase_url.replace(/\\/+$/, '') }}/rest/v1/rpc/get_active_resume",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Profile",
+              "value": "app"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ p_user_id: $json.user_id }) }}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "id": "c00d4f2b-95a3-4dd8-b2e5-710eb15c024a",
+      "name": "Get Active Resume",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1380,
+        200
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Change the model here if Google renames or retires it.\nconst MODEL = 'gemini-2.5-flash';\n\nconst job = $('Clean Job Text').first().json;\nconst resumeRow = $input.first().json || {};\nconst resume = String(resumeRow.resume_text || '').trim();\n\nif (!resume) {\n  throw new Error('No resume found for this user. Upload a resume first.');\n}\n\nconst prompt = `You are a senior technical recruiter and career coach.\nCompare the candidate resume with the job post and respond with JSON only.\n\nScoring rubric for fit_score (0 to 100):\n- 85 to 100: meets nearly all required skills and the seniority level.\n- 70 to 84: meets most requirements, small gaps that are easy to explain.\n- 50 to 69: meets about half, noticeable gaps.\n- below 50: major gaps or a different role or seniority.\nBe honest. Do not inflate the score.\n\nRules:\n- matched_skills: skills, tools or experience that appear in BOTH the resume and the job post (max 12).\n- missing_skills: requirements from the job post that the resume does not show (max 10).\n- talking_points: 3 to 5 short points the candidate should stress when applying, based only on the resume.\n- verdict: one of \"Strong fit\", \"Good fit\", \"Stretch\", \"Weak fit\".\n- summary: two or three plain sentences explaining the score.\n- company, title, location: read them from the job post. Use \"Unknown\" if not stated.\n- cover_letter: 220 to 320 words, first person, warm and specific, addressed to the hiring team.\n  Mention two or three concrete achievements from the resume that match the job.\n  Never invent experience, employers, numbers or degrees that are not in the resume.\n  Do not use em dashes. Do not include a subject line or placeholders like [Your Name];\n  sign off with the candidate's name if the resume shows it.\n\nHints scraped from the page (may be empty): ${JSON.stringify(job.hints || {})}\n\n<job_post>\n${job.text}\n</job_post>\n\n<candidate_resume>\n${resume.slice(0, 12000)}\n</candidate_resume>`;\n\nconst str = { type: 'STRING' };\nconst list = { type: 'ARRAY', items: { type: 'STRING' } };\n\nreturn [{ json: {\n  model: MODEL,\n  request: {\n    contents: [{ role: 'user', parts: [{ text: prompt }] }],\n    generationConfig: {\n      temperature: 0.4,\n      responseMimeType: 'application/json',\n      responseSchema: {\n        type: 'OBJECT',\n        properties: {\n          company: str, title: str, location: str,\n          fit_score: { type: 'INTEGER' },\n          verdict: str, summary: str,\n          matched_skills: list, missing_skills: list, talking_points: list,\n          cover_letter: str,\n        },\n        required: ['company', 'title', 'location', 'fit_score', 'verdict', 'summary',\n                   'matched_skills', 'missing_skills', 'talking_points', 'cover_letter'],\n      },\n    },\n  },\n} }];"
+      },
+      "id": "87adba10-06a4-46b0-8d98-89c313770dc0",
+      "name": "Build Gemini Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://generativelanguage.googleapis.com/v1beta/models/' + $json.model + ':generateContent' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googlePalmApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.request) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "94d4b840-43ed-4d2a-bb89-9ab36879a27a",
+      "name": "Gemini: Score and Draft",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1820,
+        200
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "notesInFlow": true,
+      "notes": "Credential: Google Gemini(PaLM) Api with your AI Studio key."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Gemini's JSON answer and shape it into the arguments of app.save_analysis.\nconst job = $('Clean Job Text').first().json;\nconst resume = $('Get Active Resume').first().json;\nconst model = $('Build Gemini Request').first().json.model;\nconst res = $input.first().json || {};\nconst raw = res?.candidates?.[0]?.content?.parts?.map((p) => p.text || '').join('') || '';\n\nlet ai;\ntry {\n  ai = JSON.parse(raw.replace(/^```(json)?/i, '').replace(/```$/, '').trim());\n} catch (e) {\n  throw new Error('Gemini did not return valid JSON. Try again.');\n}\n\n// Trims, drops \"Unknown\", and keeps within the column length limits.\nconst clean = (v, fallback = null, max = 200) => {\n  const s = String(v ?? '').trim();\n  const out = s && s.toLowerCase() !== 'unknown' ? s : fallback;\n  return out == null ? null : String(out).slice(0, max);\n};\nconst arr = (v, max) => (Array.isArray(v) ? v : [])\n  .map((x) => String(x).trim()).filter(Boolean).slice(0, max);\n\nconst score = Math.max(0, Math.min(100, Math.round(Number(ai.fit_score) || 0)));\n\n// The database accepts only these four verdicts; otherwise pick the one that matches the score.\nconst VERDICTS = ['Strong fit', 'Good fit', 'Stretch', 'Weak fit'];\nconst verdict = VERDICTS.find((v) => v.toLowerCase() === String(ai.verdict || '').trim().toLowerCase())\n  || (score >= 85 ? 'Strong fit' : score >= 70 ? 'Good fit' : score >= 50 ? 'Stretch' : 'Weak fit');\n\nreturn [{ json: {\n  p_user_id: job.user_id,\n  p_job_posting_id: job.job_posting_id,\n  p_source_url: job.url,\n  p_input_method: job.input_method,\n  p_company: clean(ai.company, job.hints?.company || 'Unknown company'),\n  p_title: clean(ai.title, job.hints?.title || 'Untitled role', 300),\n  p_location: clean(ai.location, job.hints?.location),\n  p_description: job.text,\n  p_fit_score: score,\n  p_verdict: verdict,\n  p_summary: clean(ai.summary, '', 2000),\n  p_matched_skills: arr(ai.matched_skills, 12),\n  p_missing_skills: arr(ai.missing_skills, 10),\n  p_talking_points: arr(ai.talking_points, 5),\n  p_cover_letter: String(ai.cover_letter || '').trim().slice(0, 20000),\n  p_resume_id: resume.id,\n  p_ai_model: model,\n} }];"
+      },
+      "id": "3add57d9-7771-41a0-9ff5-80f203a9762c",
+      "name": "Build Job Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2040,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.supabase_url.replace(/\\/+$/, '') }}/rest/v1/rpc/save_analysis",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Profile",
+              "value": "app"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "id": "42caf59c-301d-4541-b036-fd49ad29c833",
+      "name": "Save Analysis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2260,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ job: $json }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "04cc6931-0421-40e8-8991-bc1d0f07cddd",
+      "name": "Respond: Job",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2480,
+        200
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Pasted Text?": {
+      "main": [
+        [
+          {
+            "node": "Clean Job Text",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fetch Job Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Job Page": {
+      "main": [
+        [
+          {
+            "node": "Clean Job Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Job Text": {
+      "main": [
+        [
+          {
+            "node": "Text Readable?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Readable?": {
+      "main": [
+        [
+          {
+            "node": "Get Active Resume",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond: Unreadable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Gemini Request": {
+      "main": [
+        [
+          {
+            "node": "Gemini: Score and Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini: Score and Draft": {
+      "main": [
+        [
+          {
+            "node": "Build Job Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Job Row": {
+      "main": [
+        [
+          {
+            "node": "Save Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Has Pasted Text?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Active Resume": {
+      "main": [
+        [
+          {
+            "node": "Build Gemini Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Analysis": {
+      "main": [
+        [
+          {
+            "node": "Respond: Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}

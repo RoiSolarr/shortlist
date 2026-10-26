@@ -1,0 +1,288 @@
+{
+  "name": "Job Assistant: Process Resume",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "process-resume",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "47b28fc8-bec2-4d4c-86bc-43313345f006",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "eb14b76e-7800-4d8b-bb2a-3b80c5d8afb3",
+      "notesInFlow": true,
+      "notes": "Select your Header Auth credential (name: x-webhook-secret)."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f761f7cc-45da-4b22-b75d-8ab286c17e68",
+              "name": "supabase_url",
+              "value": "https://YOUR-PROJECT-REF.supabase.co",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f6fcfedc-ffc8-4f9a-b11a-e75dd20006fa",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Webhook').first().json.body.file_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "ef5dc97d-cd02-45cc-ac5d-ddecfbe594d3",
+      "name": "Download Resume",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "data",
+        "options": {}
+      },
+      "id": "fc340e75-0388-41fc-a417-88d4866d04bc",
+      "name": "Extract PDF Text",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        660,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalize the text that was extracted from the PDF.\nconst body = $('Webhook').first().json.body || {};\nconst raw = String($input.first().json.text || '');\n\nconst text = raw\n  .replace(/\\r/g, '')\n  .replace(/[ \\t]+/g, ' ')\n  .replace(/ *\\n */g, '\\n')\n  .replace(/\\n{3,}/g, '\\n\\n')\n  .trim()\n  .slice(0, 20000);\n\nif (text.length < 200) {\n  return [{ json: { ok: false, user_id: body.user_id,\n    error: 'This PDF has almost no readable text. It may be a scanned image. Paste your resume text instead.' } }];\n}\nreturn [{ json: { ok: true, user_id: body.user_id, text } }];"
+      },
+      "id": "23b6fd88-bed3-4cc3-9c2b-d9685c405182",
+      "name": "Clean Resume Text",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "8875945d-89d8-43dd-aff2-c06daca7640f",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "db896bce-dce1-4936-9d74-150d706b1f68",
+      "name": "Has Text?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.supabase_url.replace(/\\/+$/, '') }}/rest/v1/rpc/save_resume_text",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Profile",
+              "value": "app"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ p_user_id: $('Webhook').first().json.body.user_id, p_resume_id: $('Webhook').first().json.body.resume_id, p_text: $json.text }) }}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "id": "107bd007-90e7-4c4c-b7d1-fee377570876",
+      "name": "Save Resume Text",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, characters: $('Clean Resume Text').first().json.text.length }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "64833532-23eb-4abd-b2d6-5c030cfffd76",
+      "name": "Respond: Saved",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1540,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ error: $json.error, code: 'NO_TEXT' }) }}",
+        "options": {
+          "responseCode": 422
+        }
+      },
+      "id": "a5313eda-4aa2-4730-8a4a-0cac4127b8f9",
+      "name": "Respond: No Text",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1320,
+        420
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Resume": {
+      "main": [
+        [
+          {
+            "node": "Extract PDF Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract PDF Text": {
+      "main": [
+        [
+          {
+            "node": "Clean Resume Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Resume Text": {
+      "main": [
+        [
+          {
+            "node": "Has Text?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Text?": {
+      "main": [
+        [
+          {
+            "node": "Save Resume Text",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond: No Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Resume Text": {
+      "main": [
+        [
+          {
+            "node": "Respond: Saved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Download Resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}

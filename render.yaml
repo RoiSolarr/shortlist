@@ -1,0 +1,71 @@
+# Render Blueprint: n8n (Docker image) + the Next.js site, both on the free plan.
+# In Render: New > Blueprint > connect your GitHub repo. Values marked sync: false
+# are asked for during setup. See README.md, step 3 and step 6.
+services:
+  - type: web
+    name: shortlist-n8n
+    runtime: image
+    image:
+      url: docker.io/n8nio/n8n:latest
+    plan: free
+    healthCheckPath: /healthz
+    envVars:
+      - key: PORT
+        value: "5678"
+      - key: N8N_PORT
+        value: "5678"
+      - key: N8N_PROTOCOL
+        value: https
+      - key: N8N_ENCRYPTION_KEY
+        generateValue: true
+      - key: WEBHOOK_URL
+        sync: false
+      - key: N8N_EDITOR_BASE_URL
+        sync: false
+      - key: GENERIC_TIMEZONE
+        value: Asia/Manila
+      - key: N8N_DIAGNOSTICS_ENABLED
+        value: "false"
+      - key: N8N_RUNNERS_ENABLED
+        value: "true"
+      - key: DB_TYPE
+        value: postgresdb
+      - key: DB_POSTGRESDB_HOST
+        sync: false
+      - key: DB_POSTGRESDB_PORT
+        value: "5432"
+      - key: DB_POSTGRESDB_DATABASE
+        value: postgres
+      - key: DB_POSTGRESDB_USER
+        sync: false
+      - key: DB_POSTGRESDB_PASSWORD
+        sync: false
+      - key: DB_POSTGRESDB_SCHEMA
+        value: n8n
+      - key: DB_POSTGRESDB_SSL_ENABLED
+        value: "true"
+      - key: DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED
+        value: "false"
+
+  - type: web
+    name: shortlist-web
+    runtime: node
+    plan: free
+    rootDir: web
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+      - key: N8N_ANALYZE_WEBHOOK_URL
+        sync: false
+      - key: N8N_RESUME_WEBHOOK_URL
+        sync: false
+      - key: N8N_WEBHOOK_SECRET
+        sync: false
+      - key: DAILY_ANALYSIS_LIMIT
+        value: "20"
