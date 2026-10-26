@@ -140,20 +140,24 @@ function AuthForm() {
                 value={password}
                 onChange={setPassword}
                 invalid={invalid && mode === "signin"}
-                aside={
-                  mode === "signin" && (
-                    // Carries the address over, so it is not typed twice
-                    <Link
-                      href={email ? `/forgot-password?email=${encodeURIComponent(email)}` : "/forgot-password"}
-                      className="text-meta font-semibold text-muted underline-offset-4 transition-colors hover:text-ink hover:underline"
-                    >
-                      Forgot password?
-                    </Link>
-                  )
-                }
               >
                 {mode === "signup" && <PasswordStrength password={password} flagUnmet={triedSubmit} />}
               </PasswordField>
+            </div>
+            {/* Under the password it is about; folds away when creating an account */}
+            <div className="reveal" data-open={mode === "signin"} aria-hidden={mode !== "signin"}>
+              <div>
+                <div className="flex justify-end pt-2">
+                  <Link
+                    // Carries the address over, so it is not typed twice
+                    href={email ? `/forgot-password?email=${encodeURIComponent(email)}` : "/forgot-password"}
+                    tabIndex={mode === "signin" ? undefined : -1}
+                    className="text-meta font-semibold text-muted underline-offset-4 transition-colors hover:text-ink hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+              </div>
             </div>
             {/* Height animates instead of the form jumping between modes */}
             <div className="reveal" data-open={mode === "signup"} aria-hidden={mode !== "signup"}>

@@ -24,6 +24,13 @@ export default async function ResetPasswordPage() {
 function LinkExpired() {
   return (
     <div className="enter-up">
+      <Link
+        href="/login"
+        className="mb-8 inline-flex items-center gap-1.5 text-ui font-semibold text-muted transition-colors hover:text-ink"
+      >
+        <IconArrowLeft className="size-4" />
+        Back to sign in
+      </Link>
       <span
         className="grid size-11 place-items-center rounded-[var(--radius)] text-bad"
         style={{ background: "color-mix(in oklab, var(--bad) 10%, transparent)" }}
@@ -37,13 +44,6 @@ function LinkExpired() {
       </p>
       <Link href="/forgot-password" className="btn btn-primary btn-lg mt-7 w-full">
         Send a new link
-      </Link>
-      <Link
-        href="/login"
-        className="mt-8 inline-flex items-center gap-1.5 text-ui font-semibold text-muted transition-colors hover:text-ink"
-      >
-        <IconArrowLeft className="size-4" />
-        Back to sign in
       </Link>
     </div>
   );

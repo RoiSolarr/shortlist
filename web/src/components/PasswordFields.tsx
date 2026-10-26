@@ -19,7 +19,6 @@ export function PasswordField({
   onChange,
   disabled,
   invalid,
-  aside,
   children,
 }: {
   ref?: React.Ref<HTMLInputElement>;
@@ -31,8 +30,6 @@ export function PasswordField({
   onChange: (value: string) => void;
   disabled?: boolean;
   invalid?: boolean;
-  /** Optional: sits at the end of the label row, such as a Forgot password link. */
-  aside?: React.ReactNode;
   children?: React.ReactNode;
 }) {
   const [visible, setVisible] = useState(false);
@@ -40,12 +37,9 @@ export function PasswordField({
 
   return (
     <div>
-      <div className="flex items-baseline justify-between gap-3">
-        <label htmlFor={id} className="label">
-          {label}
-        </label>
-        {aside}
-      </div>
+      <label htmlFor={id} className="label">
+        {label}
+      </label>
       <div className="relative">
         <input
           ref={ref}

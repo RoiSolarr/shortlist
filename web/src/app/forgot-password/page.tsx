@@ -96,6 +96,7 @@ function ForgotPasswordForm() {
   if (sentTo) {
     return (
       <div className="enter-up">
+        <BackToSignIn />
         <span
           className="grid size-11 place-items-center rounded-[var(--radius)] text-good"
           style={{ background: "color-mix(in oklab, var(--good) 12%, transparent)" }}
@@ -142,14 +143,13 @@ function ForgotPasswordForm() {
             Use a different email
           </button>
         </div>
-
-        <BackToSignIn />
       </div>
     );
   }
 
   return (
     <div>
+      <BackToSignIn />
       <h1 className="t-page text-balance">Forgot your password?</h1>
       <p className="mt-3 text-ui text-muted">
         Enter the email you sign in with. We will send you a link to choose a new password.
@@ -179,17 +179,16 @@ function ForgotPasswordForm() {
           {busy ? "Sending link" : "Send reset link"}
         </button>
       </form>
-
-      <BackToSignIn />
     </div>
   );
 }
 
+/** Sits above the heading, where a way back is looked for first. */
 function BackToSignIn() {
   return (
     <Link
       href="/login"
-      className="mt-8 inline-flex items-center gap-1.5 text-ui font-semibold text-muted transition-colors hover:text-ink"
+      className="mb-8 inline-flex items-center gap-1.5 text-ui font-semibold text-muted transition-colors hover:text-ink"
     >
       <IconArrowLeft className="size-4" />
       Back to sign in
