@@ -1,5 +1,10 @@
 # Shortlist: AI Job Application Assistant
 
+Built by Roi Vincent Solar.
+
+* Live site: https://shortlist-ruddy.vercel.app
+* Code: https://github.com/RoiSolarr/shortlist
+
 Paste a job post link. n8n reads the page, compares it with your active resume using Gemini, scores your fit from 0 to 100, lists the skills you match and the gaps, drafts a cover letter, and saves everything to Supabase. The site shows every job on a tracker board (Saved, Applied, Interview, Offer, Rejected), with a timeline of when each status changed.
 
 **Stack:** Next.js 16 (App Router, TypeScript, Tailwind CSS 4), Supabase (Postgres, Auth, Storage, Row Level Security), n8n (self hosted on Render), Google Gemini API, dnd kit for drag and drop.
@@ -73,8 +78,8 @@ job-application-assistant/
 
 1. Create a free project at [supabase.com](https://supabase.com) and save the database password.
 2. **Authentication > URL Configuration**:
-   * Site URL: `http://localhost:3000` for now (your Render URL later).
-   * Redirect URLs: add `http://localhost:3000/auth/callback`, and later `https://YOUR-SITE.onrender.com/auth/callback`.
+   * Site URL: `http://localhost:3000` for now (your Vercel URL later).
+   * Redirect URLs: add `http://localhost:3000/auth/callback`, and later `https://YOUR-SITE.vercel.app/auth/callback`.
 3. Optional while testing: **Authentication > Providers > Email**, turn off **Confirm email**.
 4. Collect these values:
    * **Project URL** and **anon key** (Project Settings > API Keys). The website uses these.
@@ -161,9 +166,9 @@ npm run dev
 
 Fill in `.env.local` (see the comments inside), then open http://localhost:3000. Sign in as a demo user to see a filled board, or create your own account and add your resume on the **Resume** page. Node.js 20.9 or newer is required.
 
-### Step 7. Deploy the website
+### Step 7. Deploy the website (Vercel)
 
-Render **New > Web Service** from your repo: root directory `web`, build `npm ci && npm run build`, start `npm start`, Free plan, the same variables as `.env.local` plus `NODE_VERSION=22`. Then add the site URL and its `/auth/callback` to Supabase's URL Configuration.
+Import the repo in Vercel (**Add New > Project**), set the root directory to `web`, keep the Next.js defaults, and add the same variables as `.env.local`. Deploy, then add the site URL and its `/auth/callback` to Supabase's URL Configuration. The live site runs this way, with n8n on Render.
 
 ### Step 8. Keep n8n awake (optional)
 
@@ -197,9 +202,15 @@ Free Render services sleep after about 15 minutes. A free monitor on [UptimeRobo
 
 ## Development process and tools
 
+**My role**
+
+I set the requirements and made the design decisions for Shortlist: resume versions, analyzing a job again overwrites its card, five statuses, free services only, and the security practices from my earlier multi tenant dashboard project (Row Level Security on every table, composite foreign keys, migrations plus seed, a PASS or FAIL isolation script). I also decided to drop a Gmail status update feature, because a "Connect Gmail" option for other users would need paid Google verification. I set up and ran Supabase, n8n on Render and the Vercel deployment myself.
+
+I built it with an AI coding assistant, and I say so openly: Claude (Anthropic) wrote most of the code from my decisions.
+
 **Tools**
 
-* **Claude (Anthropic), in claude.ai:** proposed the schema with its tradeoffs, which I reviewed and approved with my own choices (resume versions, analyzing again overwrites the card, five statuses, migrations pasted into the SQL Editor). It then wrote the migrations, seed, Next.js code, n8n workflow files and these docs.
+* **Claude (Anthropic), in claude.ai:** AI coding assistant. It proposed the schema with its tradeoffs, which I reviewed and approved with my own choices (resume versions, analyzing again overwrites the card, five statuses, migrations pasted into the SQL Editor). It then wrote the migrations, seed, Next.js code, n8n workflow files and these docs from those decisions.
 * **Gemini API:** used inside the product to score fit and draft cover letters.
 * **Supabase dashboard, n8n, Render, VS Code with PowerShell on Windows:** for hosting, configuration and running the app.
 
@@ -214,8 +225,8 @@ If another AI assistant is used later, it is added here with what it was used fo
 | `save_analysis`, `save_resume_text`, `get_active_resume` normal paths (new link, pasted text, same link again keeps status and notes, analyze again by posting id) | Same, as `service_role` | Passed |
 | n8n Code node logic | Node.js with mock Gemini output, writing to the local database through `app.save_analysis` | Passed |
 | TypeScript check and `next build` | Local | Passed |
-| Migrations and seed on the hosted Supabase project | Supabase SQL Editor | **Not run yet** |
-| Website against real Supabase Auth and the Data API | Browser | **Not run yet** |
-| Workflows inside a live n8n with real Gemini calls | n8n on Render | **Not run yet** |
+| Migrations and seed on the hosted Supabase project | Supabase SQL Editor | **Passed** (run by me, the live site uses it) |
+| Website against real Supabase Auth and the Data API | Browser | **Passed** (live at the Vercel link above) |
+| Workflows inside a live n8n with real Gemini calls | n8n on Render | **Passed** |
 
-The local database only imitates Supabase, so hosted results are what count. Update the last three rows after running them.
+The local database only imitates Supabase, so the hosted rows are the ones that count. Those three were run on the live deployment.
